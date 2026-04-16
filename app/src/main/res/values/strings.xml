@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Karcioch.pl</string>
+    <string name="header_text">(ikona) Karcioch.pl</string>
+    <string name="btn_graj">Graj</string>
+    <string name="btn_autorzy">Autorzy</string>
 </resources>
