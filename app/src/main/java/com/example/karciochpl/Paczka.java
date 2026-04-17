@@ -2,10 +2,10 @@ package com.example.karciochpl;
 
 public class Paczka {
     private String nazwa;
-    private String cena;
+    private double cena;
     private int obrazekResId;
 
-    public Paczka(String nazwa, String cena, int obrazekResId) {
+    public Paczka(String nazwa, double cena, int obrazekResId) {
         this.nazwa = nazwa;
         this.cena = cena;
         this.obrazekResId = obrazekResId;
@@ -15,7 +15,7 @@ public class Paczka {
         return nazwa;
     }
 
-    public String getCena() {
+    public double getCena() {
         return cena;
     }
 

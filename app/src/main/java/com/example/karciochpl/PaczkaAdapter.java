@@ -14,9 +14,15 @@ import java.util.List;
 public class PaczkaAdapter extends RecyclerView.Adapter<PaczkaAdapter.ViewHolder> {
 
     private final List<Paczka> listaPaczek;
+    private final OnPaczkaClickListener listener;
 
-    public PaczkaAdapter(List<Paczka> listaPaczek) {
+    public interface OnPaczkaClickListener {
+        void onPaczkaClick(Paczka paczka);
+    }
+
+    public PaczkaAdapter(List<Paczka> listaPaczek, OnPaczkaClickListener listener) {
         this.listaPaczek = listaPaczek;
+        this.listener = listener;
     }
 
     @NonNull
@@ -31,8 +37,10 @@ public class PaczkaAdapter extends RecyclerView.Adapter<PaczkaAdapter.ViewHolder
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Paczka paczka = listaPaczek.get(position);
         holder.txtNazwa.setText(paczka.getNazwa());
-        holder.txtCena.setText(paczka.getCena());
+        holder.txtCena.setText(String.format("%.2f PLN", paczka.getCena()));
         holder.imgPaczka.setImageResource(paczka.getObrazekResId());
+
+        holder.itemView.setOnClickListener(v -> listener.onPaczkaClick(paczka));
     }
 
     @Override

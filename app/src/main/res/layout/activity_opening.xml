@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/openingbg"
+    android:padding="16dp">
+
+    <!-- Widok paczki -->
+    <ImageView
+        android:id="@+id/imgPackOpening"
+        android:layout_width="250dp"
+        android:layout_height="350dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:src="@drawable/firstpacket" />
+
+    <!-- Widok karty -->
+    <LinearLayout
+        android:id="@+id/cardContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/buttonContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/imgCard"
+            android:layout_width="250dp"
+            android:layout_height="350dp"
+            android:src="@drawable/logo" />
+
+        <TextView
+            android:id="@+id/tvCardName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nazwa Karty"
+            android:textColor="#FBCC62"
+            android:textSize="22sp"
+            android:textStyle="bold|italic" />
+
+        <TextView
+            android:id="@+id/tvCardValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Wartość: 10 PLN"
+            android:textColor="#4CAF50"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Przyciski akcji -->
+    <LinearLayout
+        android:id="@+id/buttonContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <Button
+            android:id="@+id/btnSellCard"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="Sprzedaj"
+            android:backgroundTint="#FF5252"
+            android:textColor="#FBCC62" />
+
+        <Button
+            android:id="@+id/btnKeepCard"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Zachowaj"
+            android:backgroundTint="#4CAF50"
+            android:textColor="#FBCC62" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

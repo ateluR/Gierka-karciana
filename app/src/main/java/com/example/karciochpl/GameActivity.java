@@ -3,9 +3,9 @@ package com.example.karciochpl;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -40,31 +40,49 @@ public class GameActivity extends AppCompatActivity {
         tvBalance = findViewById(R.id.Balance);
         tvLoan = findViewById(R.id.loan);
 
-        // Odśwież balans przy starcie
         loadFileData();
 
-        // Przycisk wstecz
         Button btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> finish());
 
-        // Przycisk Inventory
         Button btnInventory = findViewById(R.id.inventory);
         btnInventory.setOnClickListener(v -> {
             Intent intent = new Intent(GameActivity.this, InventoryActivity.class);
             startActivity(intent);
         });
 
-        // RecyclerView
         RecyclerView recyclerView = findViewById(R.id.recyclerViewPaczki);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         List<Paczka> listaPaczek = new ArrayList<>();
-        listaPaczek.add(new Paczka("2025 Topps Chrome Spongebob Squarepants 25th Anniversary Hobby Pack", "150 PLN", R.drawable.firstpacket));
-        listaPaczek.add(new Paczka("2025-26 Topps Basketball Hobby Pack", "50 PLN", R.drawable.secondpacket));
-        listaPaczek.add(new Paczka("2024-25 Topps Definitive Collection UEFA", "40000 PLN", R.drawable.thirdpacekt));
+        listaPaczek.add(new Paczka("2025 Topps Chrome Spongebob Squarepants 25th Anniversary Hobby Pack", 150.0, R.drawable.firstpacket));
+        listaPaczek.add(new Paczka("2025-26 Topps Basketball Hobby Pack", 50.0, R.drawable.secondpacket));
+        listaPaczek.add(new Paczka("2024-25 Topps Definitive Collection UEFA", 40000.0, R.drawable.thirdpacekt));
 
-        PaczkaAdapter adapter = new PaczkaAdapter(listaPaczek);
+        PaczkaAdapter adapter = new PaczkaAdapter(listaPaczek, paczka -> {
+            handlePackClick(paczka);
+        });
         recyclerView.setAdapter(adapter);
+    }
+
+    private void handlePackClick(Paczka paczka) {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        float balance = prefs.getFloat(KEY_BALANCE, 1000.0f);
+
+        if (balance >= paczka.getCena()) {
+            // Odejmij pieniądze
+            float newBalance = balance - (float) paczka.getCena();
+            prefs.edit().putFloat(KEY_BALANCE, newBalance).apply();
+            updateUI(newBalance, prefs.getFloat(KEY_LOAN, 500.0f));
+
+            // Uruchom animację otwierania
+            Intent intent = new Intent(GameActivity.this, OpeningActivity.class);
+            intent.putExtra("packImage", paczka.getObrazekResId());
+            intent.putExtra("packName", paczka.getNazwa()); // Przekazujemy nazwę paczki
+            startActivity(intent);
+        } else {
+            Toast.makeText(this, "Nie masz wystarczającej ilości pieniędzy!", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -77,7 +95,10 @@ public class GameActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         float balance = sharedPreferences.getFloat(KEY_BALANCE, 1000.0f);
         float loan = sharedPreferences.getFloat(KEY_LOAN, 500.0f);
+        updateUI(balance, loan);
+    }
 
+    private void updateUI(float balance, float loan) {
         if (tvBalance != null) {
             tvBalance.setText("Balans: " + String.format("%.2f", balance) + " PLN");
         }
