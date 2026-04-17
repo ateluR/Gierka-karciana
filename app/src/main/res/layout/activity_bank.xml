@@ -120,6 +120,7 @@
         android:text="Historia transakcji"
         android:textSize="16sp"
         android:textStyle="bold"
+        android:textColor="@color/black"
         app:layout_constraintTop_toBottomOf="@id/actionButtonsContainer"
         app:layout_constraintStart_toStartOf="parent" />
 

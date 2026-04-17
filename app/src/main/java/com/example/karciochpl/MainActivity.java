@@ -25,24 +25,20 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        // Znajdowanie przycisku "Autorzy"
         Button btnGra = findViewById(R.id.btnGra);
-// Znajdowanie przycisku "Bank"
         Button btnBank = findViewById(R.id.btnBank);
 
-        // Co ma się stać po kliknięciu
         btnGra.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Przenosimy gracza do ekranu Autorów
                 Intent intent = new Intent(MainActivity.this, GameActivity.class);
                 startActivity(intent);
             }
         });
+
         btnBank.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Przenosimy gracza do ekranu Banku
                 Intent intent = new Intent(MainActivity.this, BankActivity.class);
                 startActivity(intent);
             }
