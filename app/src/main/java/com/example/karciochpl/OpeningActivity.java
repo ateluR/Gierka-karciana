@@ -14,6 +14,10 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -31,6 +35,7 @@ public class OpeningActivity extends AppCompatActivity {
     
     private static final String PREFS_NAME = "BankPrefs";
     private static final String KEY_BALANCE = "balance";
+    private static final String KEY_INVENTORY = "inventory";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +67,7 @@ public class OpeningActivity extends AppCompatActivity {
             imgPack.startAnimation(shake);
             imgPack.setVisibility(View.GONE);
             pokazKarte();
-        }, 2000);
+        }, 1500);
 
         btnSell.setOnClickListener(v -> {
             dodajDoBalansu(wylosowaneKarty.get(obecnaKartaIndex).getWartosc());
@@ -70,10 +75,32 @@ public class OpeningActivity extends AppCompatActivity {
         });
 
         btnKeep.setOnClickListener(v -> {
-            // Tu można dodać logikę zapisu do Inventory
-            Toast.makeText(this, "Zachowano: " + wylosowaneKarty.get(obecnaKartaIndex).getNazwa(), Toast.LENGTH_SHORT).show();
+            zachowajKarte(wylosowaneKarty.get(obecnaKartaIndex));
             nastepnaKarta();
         });
+    }
+
+    private void zachowajKarte(Karta karta) {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        Gson gson = new Gson();
+        
+        // Pobierz aktualne inventory
+        String json = prefs.getString(KEY_INVENTORY, null);
+        Type type = new TypeToken<ArrayList<Karta>>() {}.getType();
+        List<Karta> inventory = gson.fromJson(json, type);
+
+        if (inventory == null) {
+            inventory = new ArrayList<>();
+        }
+
+        // Dodaj nową kartę
+        inventory.add(karta);
+
+        // Zapisz z powrotem
+        String newJson = gson.toJson(inventory);
+        prefs.edit().putString(KEY_INVENTORY, newJson).apply();
+
+        Toast.makeText(this, "Zachowano: " + karta.getNazwa(), Toast.LENGTH_SHORT).show();
     }
 
     private void inicjujPuleKart(String packName) {
@@ -82,7 +109,6 @@ public class OpeningActivity extends AppCompatActivity {
         if (packName == null) packName = "";
 
         if (packName.contains("Spongebob")) {
-            // Pulą dla paczki Spongebob
             pulaKart.add(new Karta("Sandy cheeks", 2.0, R.drawable.sandcheeks, 90));
             pulaKart.add(new Karta("Squidward’s opinia", 3.0, R.drawable.squwiradreview, 88));
             pulaKart.add(new Karta("Zmęczony Spongebob Masteful Memes", 3.0, R.drawable.mastefulmemestired, 85));
@@ -90,9 +116,8 @@ public class OpeningActivity extends AppCompatActivity {
             pulaKart.add(new Karta("SpongeBob sketchcard", 500.0, R.drawable.spongebobsketchcard1, 4));
             pulaKart.add(new Karta("Joe 1 na 50", 150.0, R.drawable.joe1of50, 20));
             pulaKart.add(new Karta("Szafirowy Patryk", 1300.0, R.drawable.sapphirepatrick, 2));
-            pulaKart.add(new Karta("Autograf Spongebob i Patryka", 2000.0, R.drawable.spongeandpatrick, 1)); // Bardzo rzadka
+            pulaKart.add(new Karta("Autograf Spongebob i Patryka", 2000.0, R.drawable.spongeandpatrick, 1));
         } else if (packName.contains("Basketball")) {
-            // Pulą dla paczki Basketball
             pulaKart.add(new Karta("Colby Jones Podpis", 600.0, R.drawable.colbyjonessignature, 5));
             pulaKart.add(new Karta("Collin Murray-Boyles", 1.0, R.drawable.collinmurrayboyles, 97));
             pulaKart.add(new Karta("Cooper Flag Koszulka", 1100.0, R.drawable.logo, 1));
@@ -106,13 +131,10 @@ public class OpeningActivity extends AppCompatActivity {
             pulaKart.add(new Karta("Russell Westbrook", 5, R.drawable.russellwestbrook, 90));
             pulaKart.add(new Karta("Bradley Beal Podpis", 40, R.drawable.bradleybealsignature, 20));
             pulaKart.add(new Karta("Collin Murray-Boyles Podpis", 80, R.drawable.collinmurrayboylessignature, 15));
-
-
         } else if (packName.contains("UEFA")) {
-            // Pulą dla paczki UEFA
             pulaKart.add(new Karta("Zlatan Ibrahimovic Podpis", 2500.0, R.drawable.zlatanibrahimovicsignature, 70));
-            pulaKart.add(new Karta("Sergio Aguero Podpis", 800.0, R.drawable.sergiuaguerosiganture, 90));
-            pulaKart.add(new Karta("Paul Nedved Podpis", 1800.0, R.drawable.paulnedvedsignature,  76));
+            pulaKart.add(new Karta("Sergi Aguero", 800.0, R.drawable.sergiuaguerosiganture, 90));
+            pulaKart.add(new Karta("Paul Nedved Podpis", 1800.0, R.drawable.paulnedvedsignature, 76));
             pulaKart.add(new Karta("Erling Haaland Podpis 1 na 1", 100000.0, R.drawable.erlinghaalandpodpis1na1, 5));
             pulaKart.add(new Karta("Heung-Min Son Podpis 1 na 10", 80000.0, R.drawable.geungminsonsingnatur1of10, 10));
             pulaKart.add(new Karta("Kenny Dalglish Podpis", 5000.0, R.drawable.kennydalglish, 30));
@@ -127,7 +149,6 @@ public class OpeningActivity extends AppCompatActivity {
             pulaKart.add(new Karta("Samuel Eto Podpis", 4800.0, R.drawable.samueletosignature, 35));
             pulaKart.add(new Karta("Sergio Busquets Podpis", 15000.0, R.drawable.sergibusquetssignatures, 19));
             pulaKart.add(new Karta("Zlatan Ibrahimovic Podpis", 8000.0, R.drawable.zlatanibrahimovicsignature, 40));
-
         }
     }
 
