@@ -71,18 +71,6 @@
             android:textStyle="bold|italic"
             android:backgroundTint="#03A9F4"/>
 
-    <Button
-        android:id="@+id/btnAutorzy"
-        android:layout_width="260dp"
-        android:layout_height="80dp"
-        android:text="Autorzy"
-        android:textSize="24sp"
-        android:textStyle="bold|italic"
-        android:textColor="#FBCC62"
-        android:backgroundTint="#03A9F4"
-        android:layout_marginTop="24dp"
-/>
-
         <TextView
             android:id="@+id/footerText"
             android:layout_width="wrap_content"

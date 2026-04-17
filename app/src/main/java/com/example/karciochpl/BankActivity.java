@@ -27,10 +27,10 @@ import java.util.List;
 
 public class BankActivity extends AppCompatActivity {
 
-    private TextView tvBalance, tvLoan, tvFlow;
+    private TextView tvBalance, tvLoan, tvTurnover;
     private double balance = 1000.0;
     private double loan = 0.0;
-    private double flow = 0.0;
+    private double turnover = 0.0;
     
     private RecyclerView recyclerViewHistory;
     private TransactionAdapter transactionAdapter;
@@ -39,7 +39,7 @@ public class BankActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "BankPrefs";
     private static final String KEY_BALANCE = "balance";
     private static final String KEY_LOAN = "loan";
-    private static final String KEY_FLOW = "flow";
+    private static final String KEY_FLOW = "flow"; // Używamy tego samego klucza dla kompatybilności
     private static final String KEY_HISTORY = "history";
 
     @Override
@@ -56,12 +56,11 @@ public class BankActivity extends AppCompatActivity {
 
         tvBalance = findViewById(R.id.Balance);
         tvLoan = findViewById(R.id.loan);
-        tvFlow = findViewById(R.id.amountValue);
+        tvTurnover = findViewById(R.id.amountValue);
         recyclerViewHistory = findViewById(R.id.recyclerViewHistory);
 
         loadFileData();
 
-        // Konfiguracja historii transakcji
         if (transactionList == null) transactionList = new ArrayList<>();
         transactionAdapter = new TransactionAdapter(transactionList);
         recyclerViewHistory.setLayoutManager(new LinearLayoutManager(this));
@@ -79,15 +78,20 @@ public class BankActivity extends AppCompatActivity {
 
     private void dodajTransakcje(String tytul, double kwota) {
         Transaction t = new Transaction(tytul, kwota);
-        transactionList.add(0, t); // Dodaj na początek listy
-        if (transactionList.size() > 50) transactionList.remove(transactionList.size() - 1); // Limit 50 wpisów
+        transactionList.add(0, t);
+        if (transactionList.size() > 50) transactionList.remove(transactionList.size() - 1);
         transactionAdapter.notifyDataSetChanged();
+        
+        // Każda transakcja (dodatnia czy ujemna) zwiększa obrót o swoją wartość bezwzględną
+        turnover += Math.abs(kwota);
+        updateUI();
+        saveFileData();
     }
 
     private void showLoanDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Weź kredyt");
-        builder.setMessage("Wpisz kwotę, którą chcesz otrzymać (Doliczymy 10% do długu):");
+        builder.setMessage("Wpisz kwotę, którą chcesz otrzymać:");
 
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
@@ -102,12 +106,8 @@ public class BankActivity extends AppCompatActivity {
                         double amountWithInterest = amount * 1.10;
                         balance += amount;
                         loan += amountWithInterest;
-                        flow += amount;
                         
                         dodajTransakcje("Kredyt (Otrzymano)", amount);
-                        
-                        updateUI();
-                        saveFileData();
                         Toast.makeText(this, "Otrzymano " + amount + " PLN", Toast.LENGTH_SHORT).show();
                     }
                 } catch (NumberFormatException e) {
@@ -144,12 +144,8 @@ public class BankActivity extends AppCompatActivity {
                         if (balance >= amountToRepay) {
                             balance -= amountToRepay;
                             loan -= amountToRepay;
-                            flow -= amountToRepay;
                             
                             dodajTransakcje("Spłata kredytu", -amountToRepay);
-                            
-                            updateUI();
-                            saveFileData();
                             Toast.makeText(this, "Spłacono " + amountToRepay + " PLN", Toast.LENGTH_SHORT).show();
                         } else {
                             Toast.makeText(this, "Brak środków", Toast.LENGTH_SHORT).show();
@@ -169,12 +165,10 @@ public class BankActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putFloat(KEY_BALANCE, (float) balance);
         editor.putFloat(KEY_LOAN, (float) loan);
-        editor.putFloat(KEY_FLOW, (float) flow);
+        editor.putFloat(KEY_FLOW, (float) turnover); // Zapisujemy obrót pod tym samym kluczem
         
         Gson gson = new Gson();
-        String jsonHistory = gson.toJson(transactionList);
-        editor.putString(KEY_HISTORY, jsonHistory);
-        
+        editor.putString(KEY_HISTORY, gson.toJson(transactionList));
         editor.apply();
     }
 
@@ -182,7 +176,7 @@ public class BankActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         balance = sharedPreferences.getFloat(KEY_BALANCE, 1000.0f);
         loan = sharedPreferences.getFloat(KEY_LOAN, 0.0f);
-        flow = sharedPreferences.getFloat(KEY_FLOW, 0.0f);
+        turnover = sharedPreferences.getFloat(KEY_FLOW, 0.0f);
         
         Gson gson = new Gson();
         String jsonHistory = sharedPreferences.getString(KEY_HISTORY, null);
@@ -195,13 +189,7 @@ public class BankActivity extends AppCompatActivity {
     private void updateUI() {
         tvBalance.setText("Balans: " + String.format("%.2f", balance) + " PLN");
         tvLoan.setText("Pożyczka: " + String.format("%.2f", loan) + " PLN");
-        
-        if (flow >= 0) {
-            tvFlow.setText("+" + String.format("%.2f", flow) + " PLN");
-            tvFlow.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
-        } else {
-            tvFlow.setText(String.format("%.2f", flow) + " PLN");
-            tvFlow.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
-        }
+        tvTurnover.setText(String.format("%.2f", turnover) + " PLN");
+        tvTurnover.setTextColor(getResources().getColor(android.R.color.holo_orange_dark));
     }
 }

@@ -126,7 +126,7 @@ public class OpeningActivity extends AppCompatActivity {
         if (packName == null) packName = "";
 
         if (packName.contains("Spongebob")) {
-            pulaKart.add(new Karta("Sandy cheeks", 2.0, R.drawable.sandcheeks, 90));
+            pulaKart.add(new Karta("Sandy cheeks", 2000000.0, R.drawable.sandcheeks, 90));
             pulaKart.add(new Karta("Squidward’s opinia", 3.0, R.drawable.squwiradreview, 88));
             pulaKart.add(new Karta("Zmęczony Spongebob Masteful Memes", 3.0, R.drawable.mastefulmemestired, 85));
             pulaKart.add(new Karta("Sandy miss appear", 200.0, R.drawable.missappear, 15));
