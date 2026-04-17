@@ -1,5 +1,6 @@
 package com.example.karciochpl;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
@@ -46,6 +47,13 @@ public class GameActivity extends AppCompatActivity {
         Button btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> finish());
 
+        // Przycisk Inventory
+        Button btnInventory = findViewById(R.id.inventory);
+        btnInventory.setOnClickListener(v -> {
+            Intent intent = new Intent(GameActivity.this, InventoryActivity.class);
+            startActivity(intent);
+        });
+
         // RecyclerView
         RecyclerView recyclerView = findViewById(R.id.recyclerViewPaczki);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -62,14 +70,13 @@ public class GameActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Odśwież dane za każdym razem, gdy wracasz do tego ekranu
         loadFileData();
     }
 
     private void loadFileData() {
         SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         float balance = sharedPreferences.getFloat(KEY_BALANCE, 1000.0f);
-        float loan = sharedPreferences.getFloat(KEY_LOAN, 0.0f);
+        float loan = sharedPreferences.getFloat(KEY_LOAN, 500.0f);
 
         if (tvBalance != null) {
             tvBalance.setText("Balans: " + String.format("%.2f", balance) + " PLN");

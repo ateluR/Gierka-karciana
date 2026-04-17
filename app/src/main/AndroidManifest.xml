@@ -26,6 +26,9 @@
         <activity
             android:name=".BankActivity"
             android:exported="false" />
+        <activity
+            android:name=".InventoryActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
