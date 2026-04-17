@@ -21,7 +21,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".CreditsActivity"
+            android:name=".GameActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BankActivity"
             android:exported="false" />
     </application>
 

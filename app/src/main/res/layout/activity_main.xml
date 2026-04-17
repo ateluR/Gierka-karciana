@@ -51,7 +51,7 @@
             android:textStyle="bold|italic"
             android:textColor="#FBCC62"/>
     <Button
-        android:id="@+id/btnAutorzy"
+        android:id="@+id/btnGra"
         android:layout_width="260dp"
         android:layout_height="80dp"
         android:layout_marginBottom="24dp"
@@ -61,8 +61,18 @@
         android:textStyle="bold|italic"
         android:backgroundTint="#03A9F4"/>
 
+        <Button
+            android:id="@+id/btnBank"
+            android:layout_width="260dp"
+            android:layout_height="80dp"
+            android:text="Bank"
+            android:textColor="#FBCC62"
+            android:textSize="24sp"
+            android:textStyle="bold|italic"
+            android:backgroundTint="#03A9F4"/>
+
     <Button
-        android:id="@+id/btnGra"
+        android:id="@+id/btnAutorzy"
         android:layout_width="260dp"
         android:layout_height="80dp"
         android:text="Autorzy"

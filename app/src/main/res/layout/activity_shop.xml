@@ -4,27 +4,45 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/main2">
+    android:id="@+id/main2"
+    android:padding="8dp">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+    <!-- Przycisk Inventory po lewej -->
+    <Button
+        android:id="@+id/inventory"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Inventory"
+        android:textColor="#FBCC62"
+        android:backgroundTint="#03A9F4"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <Button
-            android:id="@+id/inventory"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Inventory"
-            android:textColor="#FBCC62"
-            android:backgroundTint="#03A9F4" />
+    <!-- Balans na środku -->
+    <TextView
+        android:id="@+id/Balance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Balans: 0 PLN"
+        android:textColor="#4CAF50"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@+id/btnBack"
+        app:layout_constraintStart_toEndOf="@+id/inventory"
+        app:layout_constraintTop_toTopOf="@+id/inventory" />
+    <TextView
+        android:id="@+id/loan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pożyczka: 0 PLN"
+        android:textColor="#F85834"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/inventory"
+        app:layout_constraintEnd_toStartOf="@+id/btnBack"
+        app:layout_constraintStart_toEndOf="@+id/inventory" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewPaczki"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-    </LinearLayout>
-
+    <!-- Przycisk Powrót po prawej -->
     <Button
         android:id="@+id/btnBack"
         android:layout_width="wrap_content"
@@ -34,5 +52,16 @@
         android:textColor="#FBCC62"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Lista paczek poniżej przycisków -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewPaczki"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/inventory"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
