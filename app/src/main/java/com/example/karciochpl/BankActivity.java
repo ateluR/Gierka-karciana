@@ -15,16 +15,32 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BankActivity extends AppCompatActivity {
 
-    private TextView tvBalance, tvLoan;
+    private TextView tvBalance, tvLoan, tvFlow;
     private double balance = 1000.0;
     private double loan = 0.0;
+    private double flow = 0.0;
+    
+    private RecyclerView recyclerViewHistory;
+    private TransactionAdapter transactionAdapter;
+    private List<Transaction> transactionList;
 
     private static final String PREFS_NAME = "BankPrefs";
     private static final String KEY_BALANCE = "balance";
     private static final String KEY_LOAN = "loan";
+    private static final String KEY_FLOW = "flow";
+    private static final String KEY_HISTORY = "history";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,8 +56,16 @@ public class BankActivity extends AppCompatActivity {
 
         tvBalance = findViewById(R.id.Balance);
         tvLoan = findViewById(R.id.loan);
+        tvFlow = findViewById(R.id.amountValue);
+        recyclerViewHistory = findViewById(R.id.recyclerViewHistory);
 
         loadFileData();
+
+        // Konfiguracja historii transakcji
+        if (transactionList == null) transactionList = new ArrayList<>();
+        transactionAdapter = new TransactionAdapter(transactionList);
+        recyclerViewHistory.setLayoutManager(new LinearLayoutManager(this));
+        recyclerViewHistory.setAdapter(transactionAdapter);
 
         Button btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> finish());
@@ -51,6 +75,13 @@ public class BankActivity extends AppCompatActivity {
 
         Button btnRepayLoan = findViewById(R.id.btnRepayLoan);
         btnRepayLoan.setOnClickListener(v -> showRepayDialog());
+    }
+
+    private void dodajTransakcje(String tytul, double kwota) {
+        Transaction t = new Transaction(tytul, kwota);
+        transactionList.add(0, t); // Dodaj na początek listy
+        if (transactionList.size() > 50) transactionList.remove(transactionList.size() - 1); // Limit 50 wpisów
+        transactionAdapter.notifyDataSetChanged();
     }
 
     private void showLoanDialog() {
@@ -71,9 +102,13 @@ public class BankActivity extends AppCompatActivity {
                         double amountWithInterest = amount * 1.10;
                         balance += amount;
                         loan += amountWithInterest;
+                        flow += amount;
+                        
+                        dodajTransakcje("Kredyt (Otrzymano)", amount);
+                        
                         updateUI();
                         saveFileData();
-                        Toast.makeText(this, "Otrzymano " + amount + " PLN. Do spłaty dodano " + String.format("%.2f", amountWithInterest), Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "Otrzymano " + amount + " PLN", Toast.LENGTH_SHORT).show();
                     }
                 } catch (NumberFormatException e) {
                     Toast.makeText(this, "Nieprawidłowa kwota", Toast.LENGTH_SHORT).show();
@@ -81,13 +116,12 @@ public class BankActivity extends AppCompatActivity {
             }
         });
         builder.setNegativeButton("Anuluj", (dialog, which) -> dialog.cancel());
-
         builder.show();
     }
 
     private void showRepayDialog() {
         if (loan <= 0) {
-            Toast.makeText(this, "Nie masz żadnej pożyczki do spłacenia", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Nie masz pożyczki", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -105,27 +139,28 @@ public class BankActivity extends AppCompatActivity {
                 try {
                     double amountToRepay = Double.parseDouble(value);
                     if (amountToRepay > 0) {
-                        if (amountToRepay > loan) {
-                            amountToRepay = loan;
-                        }
+                        if (amountToRepay > loan) amountToRepay = loan;
 
                         if (balance >= amountToRepay) {
                             balance -= amountToRepay;
                             loan -= amountToRepay;
+                            flow -= amountToRepay;
+                            
+                            dodajTransakcje("Spłata kredytu", -amountToRepay);
+                            
                             updateUI();
                             saveFileData();
-                            Toast.makeText(this, "Spłacono " + String.format("%.2f", amountToRepay) + " PLN długu", Toast.LENGTH_LONG).show();
+                            Toast.makeText(this, "Spłacono " + amountToRepay + " PLN", Toast.LENGTH_SHORT).show();
                         } else {
-                            Toast.makeText(this, "Nie masz wystarczających środków na balansie!", Toast.LENGTH_LONG).show();
+                            Toast.makeText(this, "Brak środków", Toast.LENGTH_SHORT).show();
                         }
                     }
                 } catch (NumberFormatException e) {
-                    Toast.makeText(this, "Nieprawidłowa kwota", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Błąd kwoty", Toast.LENGTH_SHORT).show();
                 }
             }
         });
         builder.setNegativeButton("Anuluj", (dialog, which) -> dialog.cancel());
-
         builder.show();
     }
 
@@ -134,6 +169,12 @@ public class BankActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putFloat(KEY_BALANCE, (float) balance);
         editor.putFloat(KEY_LOAN, (float) loan);
+        editor.putFloat(KEY_FLOW, (float) flow);
+        
+        Gson gson = new Gson();
+        String jsonHistory = gson.toJson(transactionList);
+        editor.putString(KEY_HISTORY, jsonHistory);
+        
         editor.apply();
     }
 
@@ -141,11 +182,26 @@ public class BankActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         balance = sharedPreferences.getFloat(KEY_BALANCE, 1000.0f);
         loan = sharedPreferences.getFloat(KEY_LOAN, 0.0f);
+        flow = sharedPreferences.getFloat(KEY_FLOW, 0.0f);
+        
+        Gson gson = new Gson();
+        String jsonHistory = sharedPreferences.getString(KEY_HISTORY, null);
+        Type type = new TypeToken<ArrayList<Transaction>>() {}.getType();
+        transactionList = gson.fromJson(jsonHistory, type);
+
         updateUI();
     }
 
     private void updateUI() {
         tvBalance.setText("Balans: " + String.format("%.2f", balance) + " PLN");
         tvLoan.setText("Pożyczka: " + String.format("%.2f", loan) + " PLN");
+        
+        if (flow >= 0) {
+            tvFlow.setText("+" + String.format("%.2f", flow) + " PLN");
+            tvFlow.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+        } else {
+            tvFlow.setText(String.format("%.2f", flow) + " PLN");
+            tvFlow.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+        }
     }
 }

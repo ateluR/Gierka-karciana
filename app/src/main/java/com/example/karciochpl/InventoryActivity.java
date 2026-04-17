@@ -7,7 +7,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.appcompat.widget.SearchView;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.gson.Gson;
@@ -22,12 +23,16 @@ public class InventoryActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private InventoryAdapter adapter;
     private List<Karta> inventoryList;
+    private List<Karta> filteredList;
     private TextView tvBalance, tvLoan;
+    private SearchView searchView;
 
     private static final String PREFS_NAME = "BankPrefs";
     private static final String KEY_INVENTORY = "inventory";
     private static final String KEY_BALANCE = "balance";
     private static final String KEY_LOAN = "loan";
+    private static final String KEY_HISTORY = "history";
+    private static final String KEY_FLOW = "flow";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,23 +44,51 @@ public class InventoryActivity extends AppCompatActivity {
         Button btnSellAll = findViewById(R.id.btnSellAll);
         tvBalance = findViewById(R.id.tvBalanceInventory);
         tvLoan = findViewById(R.id.tvLoanInventory);
+        searchView = findViewById(R.id.searchViewInventory);
 
         btnBack.setOnClickListener(v -> finish());
         btnSellAll.setOnClickListener(v -> sprzedajWszystko());
 
-        // Wczytaj i wyświetl balans oraz pożyczkę
         odswiezNaglowek();
-
-        // Wczytaj dane inventory
         wczytajInventory();
 
         if (inventoryList == null) {
             inventoryList = new ArrayList<>();
         }
+        
+        filteredList = new ArrayList<>(inventoryList);
 
-        adapter = new InventoryAdapter(inventoryList, position -> sprzedajPojedynczaKarte(position));
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new InventoryAdapter(filteredList, position -> sprzedajPojedynczaKarte(position));
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         recyclerView.setAdapter(adapter);
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                filter(newText);
+                return true;
+            }
+        });
+    }
+
+    private void filter(String text) {
+        filteredList.clear();
+        if (text.isEmpty()) {
+            filteredList.addAll(inventoryList);
+        } else {
+            text = text.toLowerCase();
+            for (Karta item : inventoryList) {
+                if (item.getNazwa().toLowerCase().contains(text)) {
+                    filteredList.add(item);
+                }
+            }
+        }
+        adapter.notifyDataSetChanged();
     }
 
     private void odswiezNaglowek() {
@@ -76,18 +109,20 @@ public class InventoryActivity extends AppCompatActivity {
     }
 
     private void sprzedajPojedynczaKarte(int position) {
-        if (position >= 0 && position < inventoryList.size()) {
-            Karta karta = inventoryList.get(position);
+        if (position >= 0 && position < filteredList.size()) {
+            Karta karta = filteredList.get(position);
             double cena = karta.getWartosc();
 
-            dodajDoBalansu(cena);
-            inventoryList.remove(position);
-            zapiszInventory();
+            dodajDoBalansuIFlow(cena);
+            dodajDoHistorii("Sprzedaż: " + karta.getNazwa(), cena);
 
-            adapter.notifyItemRemoved(position);
-            adapter.notifyItemRangeChanged(position, inventoryList.size());
-            
+            inventoryList.remove(karta);
+            filteredList.remove(position);
+
+            zapiszInventory();
+            adapter.notifyDataSetChanged();
             odswiezNaglowek();
+            
             Toast.makeText(this, "Sprzedano: " + karta.getNazwa(), Toast.LENGTH_SHORT).show();
         }
     }
@@ -103,8 +138,11 @@ public class InventoryActivity extends AppCompatActivity {
             suma += k.getWartosc();
         }
 
-        dodajDoBalansu(suma);
+        dodajDoBalansuIFlow(suma);
+        dodajDoHistorii("Sprzedaż wszystkich kart", suma);
+
         inventoryList.clear();
+        filteredList.clear();
         zapiszInventory();
 
         adapter.notifyDataSetChanged();
@@ -113,10 +151,31 @@ public class InventoryActivity extends AppCompatActivity {
         Toast.makeText(this, "Sprzedano wszystko za: " + String.format("%.2f", suma) + " PLN", Toast.LENGTH_LONG).show();
     }
 
-    private void dodajDoBalansu(double kwota) {
+    private void dodajDoBalansuIFlow(double kwota) {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         float obecnyBalans = prefs.getFloat(KEY_BALANCE, 1000.0f);
-        prefs.edit().putFloat(KEY_BALANCE, obecnyBalans + (float) kwota).apply();
+        float obecnyFlow = prefs.getFloat(KEY_FLOW, 0.0f);
+        
+        prefs.edit()
+            .putFloat(KEY_BALANCE, obecnyBalans + (float) kwota)
+            .putFloat(KEY_FLOW, obecnyFlow + (float) kwota)
+            .apply();
+    }
+
+    private void dodajDoHistorii(String tytul, double kwota) {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        Gson gson = new Gson();
+        
+        String json = prefs.getString(KEY_HISTORY, null);
+        Type type = new TypeToken<ArrayList<Transaction>>() {}.getType();
+        List<Transaction> history = gson.fromJson(json, type);
+        
+        if (history == null) history = new ArrayList<>();
+        
+        history.add(0, new Transaction(tytul, kwota));
+        if (history.size() > 50) history.remove(history.size() - 1);
+        
+        prefs.edit().putString(KEY_HISTORY, gson.toJson(history)).apply();
     }
 
     private void zapiszInventory() {

@@ -15,6 +15,10 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +28,8 @@ public class GameActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "BankPrefs";
     private static final String KEY_BALANCE = "balance";
     private static final String KEY_LOAN = "loan";
+    private static final String KEY_HISTORY = "history";
+    private static final String KEY_FLOW = "flow";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,21 +74,46 @@ public class GameActivity extends AppCompatActivity {
     private void handlePackClick(Paczka paczka) {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         float balance = prefs.getFloat(KEY_BALANCE, 1000.0f);
+        float flow = prefs.getFloat(KEY_FLOW, 0.0f);
 
         if (balance >= paczka.getCena()) {
-            // Odejmij pieniądze
+            // Odejmij pieniądze i zaktualizuj przepływ
             float newBalance = balance - (float) paczka.getCena();
-            prefs.edit().putFloat(KEY_BALANCE, newBalance).apply();
-            updateUI(newBalance, prefs.getFloat(KEY_LOAN, 500.0f));
+            float newFlow = flow - (float) paczka.getCena();
+            
+            prefs.edit()
+                .putFloat(KEY_BALANCE, newBalance)
+                .putFloat(KEY_FLOW, newFlow)
+                .apply();
+                
+            dodajDoHistorii("Zakup paczki: " + paczka.getNazwa(), -paczka.getCena());
+            
+            updateUI(newBalance, prefs.getFloat(KEY_LOAN, 0.0f));
 
             // Uruchom animację otwierania
             Intent intent = new Intent(GameActivity.this, OpeningActivity.class);
             intent.putExtra("packImage", paczka.getObrazekResId());
-            intent.putExtra("packName", paczka.getNazwa()); // Przekazujemy nazwę paczki
+            intent.putExtra("packName", paczka.getNazwa());
             startActivity(intent);
         } else {
             Toast.makeText(this, "Nie masz wystarczającej ilości pieniędzy!", Toast.LENGTH_SHORT).show();
         }
+    }
+    
+    private void dodajDoHistorii(String tytul, double kwota) {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        Gson gson = new Gson();
+        
+        String json = prefs.getString(KEY_HISTORY, null);
+        Type type = new TypeToken<ArrayList<Transaction>>() {}.getType();
+        List<Transaction> history = gson.fromJson(json, type);
+        
+        if (history == null) history = new ArrayList<>();
+        
+        history.add(0, new Transaction(tytul, kwota));
+        if (history.size() > 50) history.remove(history.size() - 1);
+        
+        prefs.edit().putString(KEY_HISTORY, gson.toJson(history)).apply();
     }
 
     @Override
@@ -94,7 +125,7 @@ public class GameActivity extends AppCompatActivity {
     private void loadFileData() {
         SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         float balance = sharedPreferences.getFloat(KEY_BALANCE, 1000.0f);
-        float loan = sharedPreferences.getFloat(KEY_LOAN, 500.0f);
+        float loan = sharedPreferences.getFloat(KEY_LOAN, 0.0f);
         updateUI(balance, loan);
     }
 

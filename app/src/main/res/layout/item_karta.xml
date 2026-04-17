@@ -3,60 +3,57 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="6dp"
+    android:layout_margin="4dp"
+    app:cardCornerRadius="10dp"
+    app:cardElevation="4dp"
     app:cardBackgroundColor="#2A2A2A">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="12dp">
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:gravity="center_horizontal">
 
         <ImageView
             android:id="@+id/imgKartaInventory"
-            android:layout_width="100dp"
-            android:layout_height="140dp"
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
             android:scaleType="fitCenter"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
             android:src="@drawable/logo" />
 
         <TextView
             android:id="@+id/tvNazwaKartyInventory"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginTop="4dp"
             android:text="Nazwa Karty"
             android:textColor="#FBCC62"
-            android:textSize="20sp"
+            android:textSize="14sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/imgKartaInventory"
-            app:layout_constraintTop_toTopOf="@id/imgKartaInventory" />
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
         <TextView
             android:id="@+id/tvWartoscKartyInventory"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Wartość: 100.00 PLN"
+            android:text="100.00 PLN"
             android:textColor="#4CAF50"
-            android:textSize="16sp"
-            app:layout_constraintStart_toStartOf="@id/tvNazwaKartyInventory"
-            app:layout_constraintTop_toBottomOf="@id/tvNazwaKartyInventory" />
+            android:textSize="12sp"
+            android:gravity="center" />
 
         <Button
             android:id="@+id/btnSellSingle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:layout_marginTop="4dp"
             android:text="Sprzedaj"
-            android:textSize="12sp"
+            android:textSize="10sp"
+            android:padding="0dp"
             android:backgroundTint="#FF5252"
-            android:textColor="#FBCC62"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            android:textColor="#FBCC62" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 </androidx.cardview.widget.CardView>

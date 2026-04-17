@@ -36,6 +36,8 @@ public class OpeningActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "BankPrefs";
     private static final String KEY_BALANCE = "balance";
     private static final String KEY_INVENTORY = "inventory";
+    private static final String KEY_HISTORY = "history";
+    private static final String KEY_FLOW = "flow";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,13 +57,9 @@ public class OpeningActivity extends AppCompatActivity {
         String packName = getIntent().getStringExtra("packName");
         imgPack.setImageResource(packImage);
 
-        // 1. Inicjuj pulę kart na podstawie nazwy paczki
         inicjujPuleKart(packName);
-
-        // 2. Generuj 5 losowych kart na podstawie rzadkości
         generujKarty();
 
-        // Start animacji paczki
         new Handler().postDelayed(() -> {
             Animation shake = AnimationUtils.loadAnimation(this, android.R.anim.fade_out);
             imgPack.startAnimation(shake);
@@ -70,7 +68,8 @@ public class OpeningActivity extends AppCompatActivity {
         }, 1500);
 
         btnSell.setOnClickListener(v -> {
-            dodajDoBalansu(wylosowaneKarty.get(obecnaKartaIndex).getWartosc());
+            Karta karta = wylosowaneKarty.get(obecnaKartaIndex);
+            dodajDoBalansuIFlowIHistorii("Sprzedaż (po otwarciu): " + karta.getNazwa(), karta.getWartosc());
             nastepnaKarta();
         });
 
@@ -84,28 +83,46 @@ public class OpeningActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         Gson gson = new Gson();
         
-        // Pobierz aktualne inventory
         String json = prefs.getString(KEY_INVENTORY, null);
         Type type = new TypeToken<ArrayList<Karta>>() {}.getType();
         List<Karta> inventory = gson.fromJson(json, type);
 
-        if (inventory == null) {
-            inventory = new ArrayList<>();
-        }
-
-        // Dodaj nową kartę
+        if (inventory == null) inventory = new ArrayList<>();
         inventory.add(karta);
 
-        // Zapisz z powrotem
         String newJson = gson.toJson(inventory);
         prefs.edit().putString(KEY_INVENTORY, newJson).apply();
 
         Toast.makeText(this, "Zachowano: " + karta.getNazwa(), Toast.LENGTH_SHORT).show();
     }
 
+    private void dodajDoBalansuIFlowIHistorii(String tytul, double kwota) {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        Gson gson = new Gson();
+        
+        // Pobierz aktualne dane
+        float obecnyBalans = prefs.getFloat(KEY_BALANCE, 1000.0f);
+        float obecnyFlow = prefs.getFloat(KEY_FLOW, 0.0f);
+        String historyJson = prefs.getString(KEY_HISTORY, null);
+        
+        // Przygotuj historię
+        Type type = new TypeToken<ArrayList<Transaction>>() {}.getType();
+        List<Transaction> history = gson.fromJson(historyJson, type);
+        if (history == null) history = new ArrayList<>();
+        
+        history.add(0, new Transaction(tytul, kwota));
+        if (history.size() > 50) history.remove(history.size() - 1);
+        
+        // Zapisz wszystko w jednej transakcji SharedPreferences
+        prefs.edit()
+            .putFloat(KEY_BALANCE, obecnyBalans + (float) kwota)
+            .putFloat(KEY_FLOW, obecnyFlow + (float) kwota)
+            .putString(KEY_HISTORY, gson.toJson(history))
+            .apply();
+    }
+
     private void inicjujPuleKart(String packName) {
         pulaKart.clear();
-        
         if (packName == null) packName = "";
 
         if (packName.contains("Spongebob")) {
@@ -120,7 +137,7 @@ public class OpeningActivity extends AppCompatActivity {
         } else if (packName.contains("Basketball")) {
             pulaKart.add(new Karta("Colby Jones Podpis", 600.0, R.drawable.colbyjonessignature, 5));
             pulaKart.add(new Karta("Collin Murray-Boyles", 1.0, R.drawable.collinmurrayboyles, 97));
-            pulaKart.add(new Karta("Cooper Flag Koszulka", 1100.0, R.drawable.logo, 1));
+            pulaKart.add(new Karta("Cooper Flag Koszulka", 1100.0, R.drawable.cooperflagartifact, 1));
             pulaKart.add(new Karta("Jalen Green", 1.5, R.drawable.jalengreen, 94));
             pulaKart.add(new Karta("Keldon Johnson", 1.7, R.drawable.keldonjohnson, 93));
             pulaKart.add(new Karta("Marcus Sasser", 1.8, R.drawable.marcussasser, 92));
@@ -154,17 +171,12 @@ public class OpeningActivity extends AppCompatActivity {
 
     private void generujKarty() {
         if (pulaKart.isEmpty()) return;
-
         Random random = new Random();
         int sumaWag = 0;
-        for (Karta k : pulaKart) {
-            sumaWag += k.getRzadkosc();
-        }
-
+        for (Karta k : pulaKart) sumaWag += k.getRzadkosc();
         for (int i = 0; i < 5; i++) {
             int los = random.nextInt(sumaWag);
             int aktualnaSuma = 0;
-            
             for (Karta k : pulaKart) {
                 aktualnaSuma += k.getRzadkosc();
                 if (los < aktualnaSuma) {
@@ -181,10 +193,8 @@ public class OpeningActivity extends AppCompatActivity {
             tvCardName.setText(karta.getNazwa());
             tvCardValue.setText("Wartość: " + String.format("%.2f", karta.getWartosc()) + " PLN");
             imgCard.setImageResource(karta.getObrazekResId());
-
             cardContainer.setVisibility(View.VISIBLE);
             buttonContainer.setVisibility(View.VISIBLE);
-            
             Animation fadeIn = AnimationUtils.loadAnimation(this, android.R.anim.slide_in_left);
             cardContainer.startAnimation(fadeIn);
         } else {
@@ -195,11 +205,5 @@ public class OpeningActivity extends AppCompatActivity {
     private void nastepnaKarta() {
         obecnaKartaIndex++;
         pokazKarte();
-    }
-
-    private void dodajDoBalansu(double kwota) {
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        float obecnyBalans = prefs.getFloat(KEY_BALANCE, 1000.0f);
-        prefs.edit().putFloat(KEY_BALANCE, obecnyBalans + (float) kwota).apply();
     }
 }
